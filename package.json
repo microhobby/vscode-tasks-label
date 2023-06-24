@@ -4,6 +4,14 @@
   "displayName": "Tasks Label goto definition",
   "description": "Implement goto definition from tasks.json labels",
   "version": "0.0.1",
+  "publisher": "microhobby",
+  "repository": {
+    "url": "https://github.com/microhobby/vscode-tasks-label"
+  },
+  "author": {
+    "name": "Matheus Castello",
+    "email": "matheus@castello.eng.br"
+  },
   "engines": {
     "vscode": "^1.79.0"
   },
