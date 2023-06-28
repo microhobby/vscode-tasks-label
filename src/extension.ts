@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 
 interface Task {
 	label: string;
@@ -10,9 +11,13 @@ export function provideDefinition(
 	position: vscode.Position, 
 	token: vscode.CancellationToken
 ): vscode.ProviderResult<vscode.DefinitionLink[]> {
-	if (document.fileName.endsWith('tasks.json')) {
+	if (
+		document.fileName.endsWith('tasks.json') ||
+		document.fileName.endsWith('launch.json')
+	) {
 		// read the file
-		const text = document.getText();
+		let text = document.getText();
+		let path = document.uri.fsPath;
 		
 		// we have to get the string inside the quotes
 		let range = document.getWordRangeAtPosition(position);
@@ -29,6 +34,13 @@ export function provideDefinition(
 		word = word.replace(/"/g, '');
 
 		// pass trough the lines
+		if (document.fileName.endsWith('launch.json')) {
+			// read the tasks.json
+			path = document.uri.fsPath
+				.replace('launch.json', 'tasks.json');
+			text = fs.readFileSync(path, 'utf8');
+		}
+
 		const lines = text.split(/\r?\n/g);
 		for (let index = 0; index < lines.length; index++) {
 			const line = lines[index];
@@ -41,7 +53,7 @@ export function provideDefinition(
 
 				if (task.label === word) {
 					return [{
-						targetUri: vscode.Uri.file(document.fileName),
+						targetUri: vscode.Uri.file(path),
 						targetRange: new vscode.Range(
 							task.line, 0, 
 							task.line, 0

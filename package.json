@@ -3,7 +3,7 @@
   "icon": "img/logo.png",
   "displayName": "Tasks Label goto definition",
   "description": "Implement goto definition from tasks.json labels",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "microhobby",
   "repository": {
     "url": "https://github.com/microhobby/vscode-tasks-label"
