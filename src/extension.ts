@@ -1,9 +1,27 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import * as Path from 'path';
 
 interface Task {
 	label: string;
 	line: number;
+}
+
+function _isIncludeFile(fileName: string): boolean {
+	const _includeFiles = 
+		vscode
+			.workspace
+				.getConfiguration("tasksLabel")
+					.get("includeFiles") as string[];
+
+	for (let index = 0; index < _includeFiles.length; index++) {
+		const includeFile = _includeFiles[index];
+		if (fileName.endsWith(includeFile)) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 export function provideDefinition(
@@ -13,7 +31,8 @@ export function provideDefinition(
 ): vscode.ProviderResult<vscode.DefinitionLink[]> {
 	if (
 		document.fileName.endsWith('tasks.json') ||
-		document.fileName.endsWith('launch.json')
+		document.fileName.endsWith('launch.json') ||
+		_isIncludeFile(document.fileName)
 	) {
 		// read the file
 		let text = document.getText();
@@ -33,33 +52,67 @@ export function provideDefinition(
 
 		word = word.replace(/"/g, '');
 
-		// pass trough the lines
-		if (document.fileName.endsWith('launch.json')) {
-			// read the tasks.json
-			path = document.uri.fsPath
-				.replace('launch.json', 'tasks.json');
+		// pass trough the files
+		const files = Array<{
+			path: string,
+			content: string
+		}>();
+		const _includeFiles = 
+			vscode
+				.workspace
+					.getConfiguration("tasksLabel")
+						.get("includeFiles") as string[];
+		_includeFiles.push(".vscode/tasks.json");
+
+		// read the files
+		for (let index = 0; index < _includeFiles.length; index++) {
+			const includeFile = _includeFiles[index];
+			// if (document.fileName.endsWith(includeFile)) {
+			// 	continue;
+			// }
+
+			// FIXME: this will not work for multi-root workspaces
+			path = Path.join(vscode.workspace.rootPath!, includeFile);
 			text = fs.readFileSync(path, 'utf8');
+
+			files.push({
+				"path": path,
+				"content": text
+			});
 		}
 
-		const lines = text.split(/\r?\n/g);
-		for (let index = 0; index < lines.length; index++) {
-			const line = lines[index];
-			const match = line.match(/"label":\s*"(.*)"/);
-			if (match) {
-				const task: Task = {
-					label: match[1],
-					line: index
-				};
+		// pass trough the lines
+		// if (document.fileName.endsWith('launch.json')) {
+		// 	// read the tasks.json
+		// 	path = document.uri.fsPath
+		// 		.replace('launch.json', 'tasks.json');
+		// 	text = fs.readFileSync(path, 'utf8');
+		// }
 
-				if (task.label === word) {
-					return [{
-						targetUri: vscode.Uri.file(path),
-						targetRange: new vscode.Range(
-							task.line, 0, 
-							task.line, 0
-						),
-						originSelectionRange: range
-					}];
+		// for each file content
+		for (const fileContent of files) {
+			const lines = fileContent.content.split(/\r?\n/g);
+			const lPath = fileContent.path;
+
+			for (let index = 0; index < lines.length; index++) {
+				const line = lines[index];
+				const match = line.match(/"label":\s*"(.*)"/);
+				if (match) {
+					const task: Task = {
+						label: match[1],
+						line: index
+					};
+
+					if (task.label === word) {
+						return [{
+							targetUri: vscode.Uri.file(lPath),
+							targetRange: new vscode.Range(
+								task.line, 0, 
+								task.line, 0
+							),
+							originSelectionRange: range
+						}];
+					}
 				}
 			}
 		}
@@ -70,14 +123,19 @@ export function provideDefinition(
 
 // this should be the fastest extension ever done
 export function activate(context: vscode.ExtensionContext) {
-	const disposable = vscode.languages.registerDefinitionProvider(
+	context.subscriptions.push(vscode.languages.registerDefinitionProvider(
 		{ scheme: 'file', language: 'jsonc' },
 		{
 			provideDefinition: provideDefinition
 		}
-	);
+	));
 
-	context.subscriptions.push(disposable);
+	context.subscriptions.push(vscode.languages.registerDefinitionProvider(
+		{ scheme: 'file', language: 'json' },
+		{
+			provideDefinition: provideDefinition
+		}
+	));
 }
 
 export function deactivate() {}

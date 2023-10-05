@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.0.3] - 2023-10-05
+
+### Added
+
+- Support to add `include` files to the settings;
+
 ## [0.0.2] - 2023-06-28
 
 ### Added

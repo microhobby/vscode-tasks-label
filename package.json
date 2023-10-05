@@ -3,7 +3,7 @@
   "icon": "img/logo.png",
   "displayName": "Tasks Label goto definition",
   "description": "Implement goto definition from tasks.json labels",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "microhobby",
   "repository": {
     "url": "https://github.com/microhobby/vscode-tasks-label"
@@ -19,10 +19,25 @@
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:jsonc"
+    "onLanguage:jsonc",
+    "onLanguage:json"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration":[
+      {
+        "title": "Tasks Label goto definition configutarions",
+        "properties": {
+          "tasksLabel.includeFiles": {
+            "type": "array",
+            "default": [
+              ""
+            ],
+            "description": "Add more files to be included in the index"
+          }
+        }
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
