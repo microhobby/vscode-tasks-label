@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Add completion for `dependsOn` in `tasks.json` file;
+- Add completion for `preLaunchTask` in `launch.json` file;
+
 ## [0.0.3] - 2023-10-05
 
 ### Added
