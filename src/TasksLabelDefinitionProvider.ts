@@ -10,6 +10,20 @@ interface Task {
 export class TasksLabelDefinitionProvider
     implements vscode.DefinitionProvider
 {
+    regDisposables: vscode.Disposable[] = [];
+
+    constructor () {
+        this.regDisposables.push(vscode.languages.registerDefinitionProvider(
+            { scheme: 'file', language: 'jsonc' },
+            this
+        ));
+
+        this.regDisposables.push(vscode.languages.registerDefinitionProvider(
+            { scheme: 'file', language: 'json' },
+            this
+        ));
+    }
+
     private _isIncludeFile(fileName: string): boolean {
         const _includeFiles = 
             vscode

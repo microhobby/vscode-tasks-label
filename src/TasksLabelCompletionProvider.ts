@@ -4,10 +4,17 @@ import { TasksLabelDefinitionProvider } from './TasksLabelDefinitionProvider';
 export class TasksLabelCompletionProvider
     implements vscode.CompletionItemProvider
 {
+    regDisposables: vscode.Disposable[] = [];
     private _definition: TasksLabelDefinitionProvider;
 
     constructor (definition: TasksLabelDefinitionProvider) {
         this._definition = definition;
+
+        this.regDisposables.push(vscode.languages.registerCompletionItemProvider(
+			{ scheme: 'file', language: 'jsonc' },
+			this,
+			"\""
+		));
     }
 
     private _expectedDependsOn (
