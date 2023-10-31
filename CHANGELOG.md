@@ -1,9 +1,15 @@
 # Change Log
 
-## [Unreleased]
+## [0.0.4] - 2023-10-31
+
+### Added
 
 - Add completion for `dependsOn` in `tasks.json` file;
 - Add completion for `preLaunchTask` in `launch.json` file;
+
+### Fixed
+
+- Issue that prevented the default `tasks.json` and `launch.json` from workspace to provide go to definition if the `tasksLabel.includeFiles` are not set;
 
 ## [0.0.3] - 2023-10-05
 
