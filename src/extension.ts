@@ -3,7 +3,7 @@ import { TasksLabelCompletionProvider } from './TasksLabelCompletionProvider';
 import { TasksLabelDefinitionProvider } from './TasksLabelDefinitionProvider';
 
 export function activate(context: vscode.ExtensionContext) {
-	const definitionProvider = 
+	const definitionProvider =
 		new TasksLabelDefinitionProvider();
 	const completionProvider =
 		new TasksLabelCompletionProvider(definitionProvider);

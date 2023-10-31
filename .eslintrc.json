@@ -11,6 +11,16 @@
     "rules": {
         "@typescript-eslint/naming-convention": "warn",
         "@typescript-eslint/semi": "warn",
+        "max-len": [
+            "warn",
+            {
+                "code": 80
+            }
+        ],
+        "indent": [
+            "warn",
+            "tab"
+        ],
         "curly": "warn",
         "eqeqeq": "warn",
         "no-throw-literal": "warn",
