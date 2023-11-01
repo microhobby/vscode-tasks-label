@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as Path from 'path';
+import * as JSONC from 'jsonc-parser';
 
 interface Task {
 	label: string;
@@ -11,8 +12,12 @@ export class TasksLabelDefinitionProvider
 implements vscode.DefinitionProvider
 {
 	regDisposables: vscode.Disposable[] = [];
+	diagnostics: vscode.DiagnosticCollection;
 
 	constructor () {
+		this.diagnostics =
+			vscode.languages.createDiagnosticCollection("tasksLabel");
+
 		this.regDisposables.push(vscode.languages.registerDefinitionProvider(
 			{ scheme: 'file', language: 'jsonc' },
 			this
@@ -22,12 +27,66 @@ implements vscode.DefinitionProvider
 			{ scheme: 'file', language: 'json' },
 			this
 		));
+
+		this._runDiagnosticsForAllOpenedFiles();
+
+		// run diagnostic for when user open a new jsonc file
+		this.regDisposables.push(
+			vscode.workspace.onDidOpenTextDocument(document => {
+				if (
+					document.languageId === 'jsonc' &&
+					this._isIncludeFile(document.fileName)
+				) {
+					// diagnostic
+					this._checkIfDependsOnAreDefined(document);
+				}
+			})
+		);
+
+		// run diagnostic for any user change
+		this.regDisposables.push(
+			vscode.workspace.onDidChangeTextDocument(ev => {
+				const document = ev.document;
+				if (
+					document.languageId === 'jsonc' &&
+					this._isIncludeFile(document.fileName)
+				) {
+					// diagnostic
+					this._checkIfDependsOnAreDefined(document);
+				}
+			})
+		);
+
+		// also rerun if the settings change
+		this.regDisposables.push(
+			vscode.workspace.onDidChangeConfiguration(ev => {
+				if (ev.affectsConfiguration("tasksLabel.diagnostics")) {
+					this._runDiagnosticsForAllOpenedFiles();
+				}
+			})
+		);
+	}
+
+	private _runDiagnosticsForAllOpenedFiles (): void {
+		for(const document of vscode.workspace.textDocuments) {
+			if (
+				document.languageId === 'jsonc' &&
+				this._isIncludeFile(document.fileName)
+			) {
+				// diagnostic
+				this._checkIfDependsOnAreDefined(document);
+			}
+		}
 	}
 
 	private _isIncludeFile(fileName: string): boolean {
 		const _includeFiles =
             vscode.workspace
-            	.getConfiguration("tasksLabel").get("includeFiles") as string[];
+            	.getConfiguration("tasksLabel")
+            	.get("includeFiles") as string[];
+
+		_includeFiles.push(".vscode/settings.json");
+		_includeFiles.push(".vscode/tasks.json");
 
 		for (let index = 0; index < _includeFiles.length; index++) {
 			const includeFile = _includeFiles[index];
@@ -38,6 +97,7 @@ implements vscode.DefinitionProvider
 
 		return false;
 	}
+
 	public getDefinedTasks (): string[] {
 		const fileList = [
 			".vscode/tasks.json",
@@ -68,6 +128,70 @@ implements vscode.DefinitionProvider
 		}
 
 		return labels;
+	}
+
+	private _checkIfDependsOnAreDefined (document: vscode.TextDocument): void {
+		const diagnosticEnabled =
+			vscode
+				.workspace
+				.getConfiguration("tasksLabel")
+				.get("diagnostics") as boolean;
+
+		if (diagnosticEnabled) {
+			const jsonObj = JSONC.parse(document.getText());
+			const _diagnostics: vscode.Diagnostic[] = [];
+
+			// for each task that has dependsOn check the list of labels
+			const tasks = jsonObj.tasks ?? [];
+
+			for (const task of tasks) {
+				if (task.dependsOn !== undefined && task.dependsOn.length > 0) {
+					for (const label of task.dependsOn) {
+						if (!this.getDefinedTasks().includes(label) && label) {
+						// so now we have work to do
+						// find out the line where this label is
+							const scanner =
+								JSONC.createScanner(document.getText());
+
+							// scann the document for all the dependsOn
+							let tokenCode = 0;
+							while (tokenCode !== JSONC.SyntaxKind.EOF) {
+								tokenCode = scanner.scan();
+
+								if (
+									tokenCode ===
+										JSONC.SyntaxKind.StringLiteral &&
+									scanner.getTokenValue() === label
+								) {
+									_diagnostics.push({
+										code: '',
+										message:
+											`Task "${label}" is not defined`,
+										range: new vscode.Range(
+											document.positionAt(
+												scanner.getTokenOffset()
+											),
+											document.positionAt(
+												scanner.getTokenOffset() +
+												scanner.getTokenLength()
+											)
+										),
+										severity:
+											vscode.DiagnosticSeverity.Error,
+										source: 'tasksLabel'
+									});
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// done, set it
+			this.diagnostics.set(document.uri, _diagnostics);
+		} else {
+			this.diagnostics.clear();
+		}
 	}
 
 	provideDefinition(

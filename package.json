@@ -30,10 +30,13 @@
         "properties": {
           "tasksLabel.includeFiles": {
             "type": "array",
-            "default": [
-              ""
-            ],
+            "default": [],
             "description": "Add more files to be included in the index"
+          },
+          "tasksLabel.diagnostics": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable disable the diagnostic scan for not found labels"
           }
         }
       }
@@ -59,5 +62,8 @@
     "mocha": "^10.1.0",
     "typescript": "^4.9.3",
     "@vscode/test-electron": "^2.2.0"
+  },
+  "dependencies": {
+    "jsonc-parser": "^3.2.0"
   }
 }
