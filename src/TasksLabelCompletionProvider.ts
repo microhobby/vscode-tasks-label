@@ -120,7 +120,7 @@ implements vscode.CompletionItemProvider
 		const definitions = this._definition.getDefinedTasks();
 
 		for (const def of definitions) {
-			const item = new vscode.CompletionItem(def);
+			const item = new vscode.CompletionItem(def.label);
 			item.kind = vscode.CompletionItemKind.Method;
 			items.push(item);
 		}
