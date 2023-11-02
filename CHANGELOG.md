@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.0.5] - 2023-11-02
+
+- Add codelens to show the goto references on the dependsOn;
+- Add reference provider to labels;
+
 ## [0.0.4] - 2023-10-31
 
 ### Added
