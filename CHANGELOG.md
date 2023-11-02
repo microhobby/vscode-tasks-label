@@ -1,9 +1,15 @@
 # Change Log
 
+## [0.0.6] - 2023-11-02
+
+- Update README documentation;
+- Remove img/*.gif from the extension package;
+
 ## [0.0.5] - 2023-11-02
 
 - Add codelens to show the goto references on the dependsOn;
 - Add reference provider to labels;
+- Add diagnostic for the labels used on dependsOn that are not defined;
 
 ## [0.0.4] - 2023-10-31
 
