@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.1.0] - 2023-11-07
+
+- Fix issue that was showing codelens on the wrong places;
+
 ## [0.0.6] - 2023-11-02
 
 - Update README documentation;
