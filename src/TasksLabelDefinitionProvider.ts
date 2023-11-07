@@ -106,29 +106,35 @@ export class TasksLabelDefinitionProvider implements
 	): vscode.ProviderResult<vscode.Location[]> {
 		let _references: vscode.Location[] = [];
 
-		// get the label
-		let wordRange = document.getWordRangeAtPosition(position);
-		let label = document.getText(wordRange);
+		if (
+			document.fileName.endsWith('tasks.json') ||
+            document.fileName.endsWith('launch.json') ||
+            this._isIncludeFile(document.fileName)
+		) {
+			// get the label
+			let wordRange = document.getWordRangeAtPosition(position);
+			let label = document.getText(wordRange);
 
-		while(!(label.startsWith('"') && label.endsWith('"'))) {
-			wordRange = new vscode.Range(
-				(
-					label.startsWith('"') ?
+			while(!(label.startsWith('"') && label.endsWith('"'))) {
+				wordRange = new vscode.Range(
+					(
+						label.startsWith('"') ?
 						wordRange!.start : wordRange!.start.translate(0, -1)
-				),
-				(
-					label.endsWith('"') ?
+					),
+					(
+						label.endsWith('"') ?
 						wordRange!.end : wordRange!.end.translate(0, 1)
-				)
-			);
-			label = document.getText(wordRange);
-		}
+					)
+				);
+				label = document.getText(wordRange);
+			}
 
-		label = label.replace(/"/g, '');
+			label = label.replace(/"/g, '');
 
-		// filter the object references to get only those with the same label
-		_references =
+			// filter the object ref to get only those with the same label
+			_references =
 			this.references.find(obj => obj.label === label)?.references!;
+		}
 
 		return _references;
 	}
@@ -143,31 +149,40 @@ export class TasksLabelDefinitionProvider implements
 	): vscode.ProviderResult<vscode.CodeLens[]> {
 		const lens: vscode.CodeLens[] = [];
 
-		for (const ref of this.references) {
-			const rang = new vscode.Range(
-				document.positionAt(ref.line + 1),
-				document.positionAt(
-					ref.line + 1 + ref.label.length
-				)
-			);
+		if (
+			document.fileName.endsWith('tasks.json') ||
+            document.fileName.endsWith('launch.json') ||
+            this._isIncludeFile(document.fileName)
+		) {
+			for (const ref of this.references) {
+				if (ref.location?.uri.fsPath === document.uri.fsPath) {
+					const rang = new vscode.Range(
+						document.positionAt(ref.line + 1),
+						document.positionAt(
+							ref.line + 1 + ref.label.length
+						)
+					);
 
-			lens.push(
-				{
-					isResolved: true,
-					range: new vscode.Range(
-						document.positionAt(ref.line),
-						document.positionAt(ref.line)
-					),
-					command: {
-						title: `${ref.references?.length ?? 0} references`,
-						command: "editor.action.findReferences",
-						arguments: [
-							document.uri,
-							document.positionAt(ref.line + 1)
-						]
-					}
+					lens.push(
+						{
+							isResolved: true,
+							range: new vscode.Range(
+								document.positionAt(ref.line),
+								document.positionAt(ref.line)
+							),
+							command: {
+								// eslint-disable-next-line max-len
+								title: `${ref.references?.length ?? 0} references`,
+								command: "editor.action.findReferences",
+								arguments: [
+									document.uri,
+									document.positionAt(ref.line + 1)
+								]
+							}
+						}
+					);
 				}
-			);
+			}
 		}
 
 		return lens;
@@ -191,7 +206,7 @@ export class TasksLabelDefinitionProvider implements
             	.getConfiguration("tasksLabel")
             	.get("includeFiles") as string[];
 
-		_includeFiles.push(".vscode/settings.json");
+		_includeFiles.push(".vscode/launch.json");
 		_includeFiles.push(".vscode/tasks.json");
 
 		for (let index = 0; index < _includeFiles.length; index++) {
