@@ -50,10 +50,10 @@ export class TasksLabelDefinitionProvider implements
 			})
 		);
 
-		// run diagnostic for any user change
+		// run diagnostic for any user change, after save
 		this.regDisposables.push(
-			vscode.workspace.onDidChangeTextDocument(ev => {
-				const document = ev.document;
+			vscode.workspace.onDidSaveTextDocument(ev => {
+				const document = ev;
 				if (
 					document.languageId === 'jsonc' &&
 					this._isIncludeFile(document.fileName)
