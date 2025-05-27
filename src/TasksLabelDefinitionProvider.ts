@@ -200,21 +200,29 @@ export class TasksLabelDefinitionProvider implements
 		}
 	}
 
+	private _getSettings (
+		folder: vscode.WorkspaceFolder
+	): string[] {
+		const rootPath = folder.uri.fsPath;
+		const config = vscode.workspace.getConfiguration(
+			"tasksLabel", folder.uri
+		);
+		const includeFiles = config.get("includeFiles") as string[] ?? [];
+
+		let fileList = [
+			".vscode/tasks.json",
+			".vscode/launch.json",
+			...includeFiles
+		].map(relativePath => Path.join(rootPath, relativePath));
+		// launch.json may not exist in multiroot workspace
+		fileList = fileList.filter(fs.existsSync);
+
+		return fileList;
+	}
+
 	private _isIncludeFile(fileName: string): boolean {
 		for (const folder of vscode.workspace.workspaceFolders!) {
-			const rootPath = folder.uri.fsPath;
-			const config = vscode.workspace.getConfiguration(
-				"tasksLabel", folder.uri
-			);
-			const includeFiles = config.get("includeFiles") as string[] ?? [];
-
-			let fileList = [
-				".vscode/tasks.json",
-				".vscode/launch.json",
-				...includeFiles
-			].map(relativePath => Path.join(rootPath, relativePath));
-			// launch.json may not exist in multiroot workspace
-			fileList = fileList.filter(fs.existsSync);
+			const fileList = this._getSettings(folder);
 
 			for (let index = 0; index < fileList.length; index++) {
 				const includeFile = fileList[index];
@@ -229,19 +237,7 @@ export class TasksLabelDefinitionProvider implements
 	public getDefinedTasks (): Task[] {
 		const labels = Array<Task>();
 		for (const folder of vscode.workspace.workspaceFolders!) {
-			const rootPath = folder.uri.fsPath;
-			const config = vscode.workspace.getConfiguration(
-				"tasksLabel", folder.uri
-			);
-			const includeFiles = config.get("includeFiles") as string[] ?? [];
-
-			let fileList = [
-				".vscode/tasks.json",
-				".vscode/launch.json",
-				...includeFiles
-			].map(relativePath => Path.join(rootPath, relativePath));
-			// launch.json may not exist in multiroot workspace
-			fileList = fileList.filter(fs.existsSync);
+			const fileList = this._getSettings(folder);
 
 			for (const file of fileList) {
 				try {
@@ -274,19 +270,7 @@ export class TasksLabelDefinitionProvider implements
 		const labels = Array<Task>();
 
 		for (const folder of vscode.workspace.workspaceFolders!) {
-			const rootPath = folder.uri.fsPath;
-			const config = vscode.workspace.getConfiguration(
-				"tasksLabel", folder.uri
-			);
-			const includeFiles = config.get("includeFiles") as string[] ?? [];
-
-			let fileList = [
-				".vscode/tasks.json",
-				".vscode/launch.json",
-				...includeFiles
-			].map(relativePath => Path.join(rootPath, relativePath));
-			// launch.json may not exist in multiroot workspace
-			fileList = fileList.filter(fs.existsSync);
+			const fileList = this._getSettings(folder);
 
 			for (const file of fileList) {
 				const fileUri = vscode.Uri.file(file);
